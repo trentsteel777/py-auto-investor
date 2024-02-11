@@ -67,3 +67,18 @@ def average_monthly_historical_volatility():
     print("Monthly Historical Volatility:")
     print(monthly_volatility)
     print("\nAverage Monthly Historical Volatility:", average_monthly_volatility)
+
+
+def calc_future_value():
+    initial_investment = 1000  # Initial investment amount
+    monthly_investment = 1000  # Annual investment amount
+    months = 30 * 12           # Number of months
+    annual_return = 0.00583    # Average annual return after inflation
+
+    future_value = initial_investment  # Initialize future value
+
+    for year in range(months):
+        future_value *= 1 + annual_return
+        future_value += monthly_investment
+
+    print("Future value after", months, "months of dollar-cost averaging:",  f"${round(future_value, 2):,.0f}")

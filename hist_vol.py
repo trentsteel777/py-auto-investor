@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import talib
 
 def calculate_daily_returns(prices):
     """
@@ -35,6 +36,18 @@ def calculate_historical_volatility(returns, window=20):
 
     return returns
 
+def calculate_macd(df):
+    df['macdfast'], df['macdslow'], df['macdsignal'] = talib.MACD(df['Adj Close'], fastperiod=8, slowperiod=17, signalperiod=9)
+    return df
+
+def calculate_stochastic(df):
+    df['stochslowk'], df['stochslowd'] = talib.STOCH(df['High'], df['Low'], df['Adj Close'], fastk_period=14, slowk_period=5, slowd_period=5)
+    return df
+
+def calculate_moving_average(df):
+    df['sma_10'] = talib.SMA(df['Adj Close'], timeperiod=10)
+    return df
+
 def share_prices_with_hv(symbol):
     # Read the CSV file into a pandas DataFrame
     file_path = f'data/{symbol}.csv'  # Replace with the actual file path
@@ -46,6 +59,11 @@ def share_prices_with_hv(symbol):
     # Calculate historical volatility (using a 20-day window as an example)
     spy_prices = calculate_historical_volatility(spy_prices, window=20)
 
+    spy_prices = calculate_macd(spy_prices)
+
+    spy_prices = calculate_stochastic(spy_prices)
+
+    spy_prices = calculate_moving_average(spy_prices)
     # Display the result
     #print(spy_prices[['Date', 'Daily Return', 'Historical Volatility', 'Annualized Volatility']])
     return spy_prices
