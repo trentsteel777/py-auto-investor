@@ -18,19 +18,20 @@ def main():
     
     strats = [ 
         # Option strategies
-        #SNakedPut(), 
-        #SShortStraddle(), 
+        SNakedPut(), 
+        SShortStraddle(), 
 
         # Stock strategies
-        #SPhilTown(Portfolio.SPY),
-        #SPhilTown(Portfolio.BURRY), 
-        #SPhilTown(Portfolio.GREENBLAT),
-        #SStockTwoHundredSMA(Portfolio.GREENBLAT),
+        SPhilTown(Portfolio.SPY),
+        SPhilTown(Portfolio.BURRY), 
+        SPhilTown(Portfolio.GREENBLAT),
+        SStockTwoHundredSMA(Portfolio.GREENBLAT),
         SStockTwoHundredSMA(Portfolio.SPY),
 
         # Benchmark strategies
-        SBuyAndHold()
-        #SSaveThousandPerMonth(), SDollarCostAveraging() 
+        SBuyAndHold(),
+        SSaveThousandPerMonth(), 
+        SDollarCostAveraging() 
     ]
 
     for today, _ in df_spy.iterrows():

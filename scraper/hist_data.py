@@ -52,6 +52,10 @@ def scrape_historical_data_from_yahoo_finance(symbol, state_date, end_date):
         print("Failed to fetch data:", response.status_code)
 
 def main():
+    # This script can be used to download historical data in CSV format from Yahoo Finance.
+    # Update the symbols list with the stock prices you wish to download and they will be auto-saved
+    # to the data folder in this project
+
     state_date = int(datetime.strptime("01/01/1990", '%d/%m/%Y').timestamp())
     end_date = int(datetime.strptime("14/02/2024", '%d/%m/%Y').timestamp())
     symbols = ['AMCX', 'ASRT', 'BKE', 'BTMD', 'CCSI', 'COLL', 'CPRX', 'CROX', 'HPQ', 'HRMY', 'HSII', 'IMMR', 'JAKK', 'JILL', 'MCFT', 'MD', 'MED', 'MO', 'OCUP', 'PLTK', 'PRDO', 'RMNI', 'SCYX', 'SPRO', 'SURG', 'TZOO', 'UIS', 'UNTC', 'VYGR', 'ZYME']
