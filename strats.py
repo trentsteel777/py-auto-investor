@@ -1,19 +1,9 @@
-from opt_gen import put, call
+from opt_pricer import put, call
 from opt import Option, calc_short_put_profit_loss, calc_short_call_profit_loss
 from util import round_to_nearest_5, third_friday_of_next_month, calc_discounted_saving, calc_put_margin, calc_call_margin
 
 CONTRACT_SIZE=100
 STARTING_CASH=25000
-
-class SymbolData:
-    def __init__(self, today, close, iv, sma_10, macdsignal, stochslowk, stochslowd):
-        self.today = today
-        self.close = close
-        self.iv = iv
-        self.sma_10 = sma_10
-        self.macdsignal = macdsignal
-        self.stochslowk = stochslowk
-        self.stochslowd = stochslowd
 
 class SNakedPut:
     def __init__(self):
