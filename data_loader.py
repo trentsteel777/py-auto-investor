@@ -6,11 +6,12 @@ import os
 DATA_DIR='data'
 
 class SymbolData:
-    def __init__(self, today, close, iv, sma_10, macdsignal, stochslowk, stochslowd):
+    def __init__(self, today, close, iv, sma_10, sma_200, macdsignal, stochslowk, stochslowd):
         self.today = today
         self.close = close
         self.iv = iv
         self.sma_10 = sma_10
+        self.sma_200 = sma_200
         self.macdsignal = macdsignal
         self.stochslowk = stochslowk
         self.stochslowd = stochslowd
@@ -26,10 +27,11 @@ def symbol_data(today, row):
     close = row["Adj Close"]
     iv = row["Annualized Volatility"] * 2
     sma_10 = row['sma_10']
+    sma_200 = row['sma_200']
     macdsignal = row['macdsignal']
     stochslowk = row['stochslowk']
     stochslowd = row['stochslowd']
-    return SymbolData(today, close, iv, sma_10, macdsignal, stochslowk, stochslowd)
+    return SymbolData(today, close, iv, sma_10, sma_200, macdsignal, stochslowk, stochslowd)
 
 
 def calculate_daily_returns(prices):
@@ -76,6 +78,7 @@ def calculate_stochastic(df):
 
 def calculate_moving_average(df):
     df['sma_10'] = talib.SMA(df['Adj Close'], timeperiod=10)
+    df['sma_200'] = talib.SMA(df['Adj Close'], timeperiod=200)
     return df
 
 def load_symbol_data(file_name):

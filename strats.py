@@ -1,10 +1,14 @@
 from opt_pricer import put, call
 from opt import Option, calc_short_put_profit_loss, calc_short_call_profit_loss
 from util import round_to_nearest_5, third_friday_of_next_month, calc_discounted_saving, calc_put_margin, calc_call_margin
-from enum import Enum
+from enum import Enum, auto
+from overrides import override
+from abc import ABC, abstractmethod
 
 CONTRACT_SIZE=100
 STARTING_CASH=25000
+
+# SO: Option strategies
 
 class SNakedPut:
     def __init__(self):
@@ -95,6 +99,10 @@ class SShortStraddle:
     def profit_loss(self):
         return round(self.cash, 2)
 
+# EO: Option strategies
+
+# SO: Benchmark strategies
+
 class SSaveThousandPerMonth:
     def __init__(self):
         self.cash=1000
@@ -154,51 +162,9 @@ class SBuyAndHold:
     def profit_loss(self):
         return round(self.cash + (self.shares * self.last_close), 2)
 
-class SPhilTownSpy:
-    def __init__(self):
-        self.cash=STARTING_CASH
-        self.shares = 0
-        self.last_close = None
+# EO: Benchmark strategies
 
-    def _isBuy(self, sd):
-        isBuyMaCrossOver = sd.close > sd.sma_10
-        isBuyMacdCrossOver = sd.macdsignal > 0
-        isBuyStochasticCrossOver = sd.stochslowk > sd.stochslowd
-        return isBuyMaCrossOver and isBuyMacdCrossOver and isBuyStochasticCrossOver and self.shares==0
-        #return isBuyMaCrossOver and self.shares==0
-
-    def _isSell(self, sd):
-        isSellMaCrossOver = sd.close < sd.sma_10
-        isSellMacdCrossOver = sd.macdsignal < 0
-        isSellStochasticCrossOver = sd.stochslowk < sd.stochslowd
-        return isSellMaCrossOver and isSellMacdCrossOver and isSellStochasticCrossOver and self.shares!=0
-        #return isSellMaCrossOver and self.shares!=0
-
-    def run(self, md):
-        sd = md["SPY"]
-        self.last_close = sd.close
-
-        if self._isBuy(sd):
-            self.buy(sd)
-
-        if self._isSell(sd):
-            self.sell(sd)
-
-    def buy(self, sd):
-        self.shares = int(self.cash / sd.close)
-        self.cash-= self.shares * sd.close
-        #print("SPhilTown buy", sd.today, self.shares)
-    
-    def sell(self, sd):
-        old_cash = self.cash
-        self.cash+= self.shares * sd.close
-        profit_loss = self.cash - old_cash
-        #print(self.__class__.__name__ + " sell", sd.today, self.shares, f"${profit_loss:,.0f}")
-        self.shares = 0
-
-    def profit_loss(self):
-        return round(self.cash + (self.shares * self.last_close), 2)
-    
+# SO: Stock strategies
 
 class Portfolio(Enum):
     # Michael Burry - https://twitter.com/burrytracker/status/1691435571783090176
@@ -207,29 +173,30 @@ class Portfolio(Enum):
     # Joel Greenblatt - https://www.magicformulainvesting.com/Screening/StockScreening
     GREENBLAT = ['AMCX', 'ASRT', 'BKE', 'BTMD', 'CCSI', 'COLL', 'CPRX', 'CROX', 'HPQ', 'HRMY', 'HSII', 'IMMR', 'JAKK', 'JILL', 'MCFT', 'MD', 'MED', 'MO', 'OCUP', 'PLTK', 'PRDO', 'RMNI', 'SCYX', 'SPRO', 'SURG', 'TZOO', 'UIS', 'UNTC', 'VYGR', 'ZYME']
 
-class SPhilTown:
-    def __init__(self, watchlist):
+    SPY = ['SPY']
+
+class Log(Enum):
+    DEBUG = auto()
+    NONE = auto()
+ 
+class SStock(ABC):
+    def __init__(self, watchlist, log=Log.NONE):
         self.cash=STARTING_CASH
         self.shares = {}
         self.last_closes = {}
         self.watchlist = watchlist.value
+        self.log = log
         
         for w in self.watchlist:
             self.shares[w] = 0
-
+    
+    @abstractmethod
     def _isBuy(self, symbol, sd):
-        isBuyMaCrossOver = sd.close > sd.sma_10
-        isBuyMacdCrossOver = sd.macdsignal > 0
-        isBuyStochasticCrossOver = sd.stochslowk > sd.stochslowd
-        return isBuyMaCrossOver and isBuyMacdCrossOver and isBuyStochasticCrossOver
-        #return isBuyMaCrossOver and self.shares==0
+        pass
 
+    @abstractmethod
     def _isSell(self, symbol, sd):
-        isSellMaCrossOver = sd.close < sd.sma_10
-        isSellMacdCrossOver = sd.macdsignal < 0
-        isSellStochasticCrossOver = sd.stochslowk < sd.stochslowd
-        return isSellMaCrossOver and isSellMacdCrossOver and isSellStochasticCrossOver and self.shares[symbol] > 0
-        #return isSellMaCrossOver and self.shares!=0
+        pass
 
     def run(self, md):
         buys = []
@@ -256,16 +223,53 @@ class SPhilTown:
             self.shares[symbol]+= shares
             self.cash-= shares * sd.close
             #if symbol == "GOOG":
-            #    print(self.__class__.__name__, sd.today, symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+            if Log.DEBUG == self.log:
+                print(self.__class__.__name__, sd.today, symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
     
     def sell(self, symbol, sd):
         shares = self.shares[symbol]
         self.cash+= shares * sd.close
         self.shares[symbol] = 0
         #if symbol == "GOOG":
-        #    print(self.__class__.__name__, sd.today, symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+        if Log.DEBUG == self.log:
+            print(self.__class__.__name__, sd.today, symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
 
     def profit_loss(self):
         share_values = [v * self.last_closes[k] for k,v in self.shares.items()]
         portfolio_value=sum(share_values)
         return round(self.cash + portfolio_value, 2)
+    
+class SPhilTown(SStock):
+    def __init__(self, watchlist, log=Log.NONE):
+        super().__init__(watchlist, log)
+
+    @override
+    def _isBuy(self, symbol, sd):
+        isBuyMaCrossOver = sd.close > sd.sma_10
+        isBuyMacdCrossOver = sd.macdsignal > 0
+        isBuyStochasticCrossOver = sd.stochslowk > sd.stochslowd
+        return isBuyMaCrossOver and isBuyMacdCrossOver and isBuyStochasticCrossOver
+    
+    @override
+    def _isSell(self, symbol, sd):
+        isSellMaCrossOver = sd.close < sd.sma_10
+        isSellMacdCrossOver = sd.macdsignal < 0
+        isSellStochasticCrossOver = sd.stochslowk < sd.stochslowd
+        return isSellMaCrossOver and isSellMacdCrossOver and isSellStochasticCrossOver and self.shares[symbol] > 0
+
+
+class SStockTwoHundredSMA(SStock):
+    def __init__(self, watchlist, log=Log.NONE):
+        super().__init__(watchlist, log)
+
+    @override
+    def _isBuy(self, symbol, sd):
+        isBuyMaCrossOver = sd.close > sd.sma_10 and sd.sma_10 > sd.sma_200
+        return isBuyMaCrossOver
+
+    @override
+    def _isSell(self, symbol, sd):
+        isSellMaCrossOver = sd.close < sd.sma_10 and sd.sma_10 < sd.sma_200
+        return isSellMaCrossOver and self.shares[symbol] > 0
+
+# EO: Stock strategies

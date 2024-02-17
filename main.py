@@ -1,5 +1,5 @@
 from data_loader import load_market_data, market_data_for_date
-from strats import Portfolio, SNakedPut, SShortStraddle, SPhilTownSpy, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth, SPhilTown
+from strats import Portfolio, SNakedPut, SShortStraddle, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth, SPhilTown, SStockTwoHundredSMA
 from util import Timer
 
 def print_results(df_spy, strats):
@@ -17,8 +17,20 @@ def main():
     df_spy = df_market_data.xs("SPY", level=1)
     
     strats = [ 
-        SNakedPut(), SShortStraddle(), SPhilTownSpy(),  SPhilTown(Portfolio.BURRY), SPhilTown(Portfolio.GREENBLAT),
-        SSaveThousandPerMonth(), SBuyAndHold(), SDollarCostAveraging() 
+        # Option strategies
+        #SNakedPut(), 
+        #SShortStraddle(), 
+
+        # Stock strategies
+        #SPhilTown(Portfolio.SPY),
+        #SPhilTown(Portfolio.BURRY), 
+        #SPhilTown(Portfolio.GREENBLAT),
+        #SStockTwoHundredSMA(Portfolio.GREENBLAT),
+        SStockTwoHundredSMA(Portfolio.SPY),
+
+        # Benchmark strategies
+        SBuyAndHold()
+        #SSaveThousandPerMonth(), SDollarCostAveraging() 
     ]
 
     for today, _ in df_spy.iterrows():
