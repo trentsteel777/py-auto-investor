@@ -1,5 +1,5 @@
 from hist_vol import share_prices_with_hv, load_market_data, load_single_market_data
-from strats import SNakedPut, SShortStraddle, SPhilTown, TradingData, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth
+from strats import SNakedPut, SShortStraddle, SPhilTown, TradingData, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth, SBurry
 from util import Timer
 
 def print_results(df, strats):
@@ -34,12 +34,13 @@ def stock_data(row):
 def main():
     t = Timer()
 
-    #df_stock_data = load_market_data()
-    df_stock_data = load_single_market_data("SPY")
+    df_stock_data = load_market_data()
+    #df_stock_data = load_single_market_data("SPY")
     df = df_stock_data["SPY"]
     df = df.iloc[20:]
     
-    strats = [ SNakedPut(), SShortStraddle(), SPhilTown(), SBuyAndHold(), SDollarCostAveraging(), SSaveThousandPerMonth() ]
+    #strats = [ SNakedPut(), SShortStraddle(), SPhilTown(), SBuyAndHold(), SDollarCostAveraging(), SSaveThousandPerMonth() ]
+    strats = [ SBurry() ]
     for index, row in df.iterrows():
         md = market_data(df_stock_data, row)
         for s in strats:

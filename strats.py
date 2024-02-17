@@ -5,6 +5,16 @@ from util import round_to_nearest_5, third_friday_of_next_month, calc_discounted
 CONTRACT_SIZE=100
 STARTING_CASH=25000
 
+class TradingData:
+    def __init__(self, today, close, iv, sma_10, macdsignal, stochslowk, stochslowd):
+        self.today = today
+        self.close = close
+        self.iv = iv
+        self.sma_10 = sma_10
+        self.macdsignal = macdsignal
+        self.stochslowk = stochslowk
+        self.stochslowd = stochslowd
+
 class SNakedPut:
     def __init__(self):
         self.cash=STARTING_CASH
@@ -12,6 +22,7 @@ class SNakedPut:
 
     def run(self, md):
         sd = md["SPY"]
+
         if not self.option:
             self.buy(sd.today, sd.close, sd.iv)
 
@@ -50,6 +61,7 @@ class SShortStraddle:
 
     def run(self, md):
         sd = md["SPY"]
+
         if self._isNotOpen():
             self.buy(sd.today, sd.close, sd.iv)
 
@@ -91,20 +103,6 @@ class SShortStraddle:
 
     def profit_loss(self):
         return round(self.cash, 2)
-
-class TradingData:
-    def __init__(self, today, close, iv, sma_10, macdsignal, stochslowk, stochslowd):
-        self.today = today
-        self.close = close
-        self.iv = iv
-        self.sma_10 = sma_10
-        self.macdsignal = macdsignal
-        self.stochslowk = stochslowk
-        self.stochslowd = stochslowd
-
-
-
-
 
 class SSaveThousandPerMonth:
     def __init__(self):
@@ -188,6 +186,7 @@ class SPhilTown:
     def run(self, md):
         sd = md["SPY"]
         self.last_close = sd.close
+
         if self._isBuy(sd):
             self.buy(sd)
 
@@ -212,44 +211,61 @@ class SPhilTown:
 class SBurry:
     def __init__(self):
         self.cash=STARTING_CASH
-        self.shares = 0
-        self.last_close = None
-        self.watchlist = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "Msd", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
+        self.shares = {}
+        self.last_closes = {}
+        self.watchlist = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
+        for w in self.watchlist:
+            self.shares[w] = 0
 
-    def _isBuy(self, sd):
+    def _isBuy(self, symbol, sd):
         isBuyMaCrossOver = sd.close > sd.sma_10
         isBuyMacdCrossOver = sd.macdsignal > 0
         isBuyStochasticCrossOver = sd.stochslowk > sd.stochslowd
-        return isBuyMaCrossOver and isBuyMacdCrossOver and isBuyStochasticCrossOver and self.shares==0
+        return isBuyMaCrossOver and isBuyMacdCrossOver and isBuyStochasticCrossOver
         #return isBuyMaCrossOver and self.shares==0
 
-    def _isSell(self, sd):
+    def _isSell(self, symbol, sd):
         isSellMaCrossOver = sd.close < sd.sma_10
         isSellMacdCrossOver = sd.macdsignal < 0
         isSellStochasticCrossOver = sd.stochslowk < sd.stochslowd
-        return isSellMaCrossOver and isSellMacdCrossOver and isSellStochasticCrossOver and self.shares!=0
+        return isSellMaCrossOver and isSellMacdCrossOver and isSellStochasticCrossOver and self.shares[symbol] > 0
         #return isSellMaCrossOver and self.shares!=0
 
     def run(self, md):
-        sd = md["SPY"]
-        self.last_close = sd.close
-        if self._isBuy(sd):
-            self.buy(sd)
+        buys = []
+        for w in self.watchlist:
+            if w in md:
+                sd = md[w]
+                self.last_closes[w] = sd.close
 
-        if self._isSell(sd):
-            self.sell(sd)
+                if self._isBuy(w, sd):
+                    buys.append(w)
 
-    def buy(self, sd):
-        self.shares = int(self.cash / sd.close)
-        self.cash-= self.shares * sd.close
-        #print("SPhilTown buy", sd.today, self.shares)
+                if self._isSell(w, sd):
+                    self.sell(w, sd)
+        
+        if len(buys) > 0:
+            cash_per_stock = self.cash / len(buys)
+            for w in buys:
+                sd = md[w]
+                self.buy(w, sd, cash_per_stock)
+
+    def buy(self, symbol, sd, cash_per_stock):
+        shares = int(cash_per_stock / sd.close)
+        if shares > 0:
+            self.shares[symbol]+= shares
+            self.cash-= shares * sd.close
+            if symbol == "GOOG":
+                print(self.__class__.__name__, sd.today, symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
     
-    def sell(self, sd):
-        old_cash = self.cash
-        self.cash+= self.shares * sd.close
-        profit_loss = self.cash - old_cash
-        #print(self.__class__.__name__ + " sell", sd.today, self.shares, f"${profit_loss:,.0f}")
-        self.shares = 0
+    def sell(self, symbol, sd):
+        shares = self.shares[symbol]
+        self.cash+= shares * sd.close
+        self.shares[symbol] = 0
+        if symbol == "GOOG":
+            print(self.__class__.__name__, sd.today, symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
 
     def profit_loss(self):
-        return round(self.cash + (self.shares * self.last_close), 2)
+        share_values = [v * self.last_closes[k] for k,v in self.shares.items()]
+        portfolio_value=sum(share_values)
+        return round(self.cash + portfolio_value, 2)
