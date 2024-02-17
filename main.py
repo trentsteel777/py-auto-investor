@@ -17,7 +17,7 @@ def main():
     df_spy = df_market_data.xs("SPY", level=1)
     
     strats = [ 
-        SNakedPut(), SShortStraddle(), SPhilTownSpy(),  SPhilTown(Portfolio.BURRY),
+        SNakedPut(), SShortStraddle(), SPhilTownSpy(),  SPhilTown(Portfolio.BURRY), SPhilTown(Portfolio.GREENBLAT),
         SSaveThousandPerMonth(), SBuyAndHold(), SDollarCostAveraging() 
     ]
 

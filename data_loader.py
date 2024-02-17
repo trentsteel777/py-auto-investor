@@ -84,8 +84,10 @@ def load_symbol_data(file_name):
 
     file_path = f'{DATA_DIR}/{file_name}'
 
-    df = pd.read_csv(file_path, parse_dates=['Date'])
-
+    df = pd.read_csv(file_path, parse_dates=['Date'], date_format='%d/%m/%Y')
+    
+    df['Date'] = pd.to_datetime(df['Date'])
+    
     df = calculate_daily_returns(df)
 
     df = calculate_historical_volatility(df, window=20)
