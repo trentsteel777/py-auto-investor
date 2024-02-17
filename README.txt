@@ -5,3 +5,5 @@ TODO:
         just calculate profit/loss of each strategy over the period
     bring in multiple symbols
     bring in real data
+
+https://www.interactivebrokers.ie/en/trading/margin-options.php

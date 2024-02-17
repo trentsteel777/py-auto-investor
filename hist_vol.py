@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import talib
+import os
+
+DATA_DIR='data'
 
 def calculate_daily_returns(prices):
     """
@@ -48,9 +51,12 @@ def calculate_moving_average(df):
     df['sma_10'] = talib.SMA(df['Adj Close'], timeperiod=10)
     return df
 
-def share_prices_with_hv(symbol):
+def share_prices_with_hv(file_name):
+    if not file_name.endswith(".csv"):
+        file_name+=".csv"
+
     # Read the CSV file into a pandas DataFrame
-    file_path = f'data/{symbol}.csv'  # Replace with the actual file path
+    file_path = f'{DATA_DIR}/{file_name}'  # Replace with the actual file path
     spy_prices = pd.read_csv(file_path, parse_dates=['Date'])
 
     # Calculate daily returns
@@ -68,3 +74,15 @@ def share_prices_with_hv(symbol):
     #print(spy_prices[['Date', 'Daily Return', 'Historical Volatility', 'Annualized Volatility']])
     return spy_prices
 
+def load_market_data():
+    market_data = {}
+    files = os.listdir(DATA_DIR)
+    for f in files:
+        symbol = f.replace(".csv", "")
+        market_data[symbol] = share_prices_with_hv(f)
+    return market_data
+
+def load_single_market_data(symbol):
+    market_data = {}
+    market_data[symbol] = share_prices_with_hv(symbol)
+    return market_data
