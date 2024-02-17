@@ -1,6 +1,7 @@
 from opt_pricer import put, call
 from opt import Option, calc_short_put_profit_loss, calc_short_call_profit_loss
 from util import round_to_nearest_5, third_friday_of_next_month, calc_discounted_saving, calc_put_margin, calc_call_margin
+from enum import Enum
 
 CONTRACT_SIZE=100
 STARTING_CASH=25000
@@ -198,12 +199,21 @@ class SPhilTownSpy:
     def profit_loss(self):
         return round(self.cash + (self.shares * self.last_close), 2)
     
-class SBurry:
-    def __init__(self):
+
+class Portfolio(Enum):
+    # Michael Burry - https://twitter.com/burrytracker/status/1691435571783090176
+    BURRY = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
+
+    # Joel Greenblatt - https://www.magicformulainvesting.com/Screening/StockScreening
+    GREENBLAT = ['AMCX', 'ASRT', 'BKE', 'BTMD', 'CCSI', 'COLL', 'CPRX', 'CROX', 'HPQ', 'HRMY', 'HSII', 'IMMR', 'JAKK', 'JILL', 'MCFT', 'MD', 'MED', 'MO', 'OCUP', 'PLTK', 'PRDO', 'RMNI', 'SCYX', 'SPRO', 'SURG', 'TZOO', 'UIS', 'UNTC', 'VYGR', 'ZYME']
+
+class SPhilTown:
+    def __init__(self, watchlist):
         self.cash=STARTING_CASH
         self.shares = {}
         self.last_closes = {}
-        self.watchlist = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
+        self.watchlist = watchlist.value
+        
         for w in self.watchlist:
             self.shares[w] = 0
 
