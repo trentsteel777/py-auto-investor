@@ -1,52 +1,48 @@
-from hist_vol import share_prices_with_hv, load_market_data, load_single_market_data
-from strats import SNakedPut, SShortStraddle, SPhilTown, TradingData, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth, SBurry
+from hist_vol import share_prices_with_hv, load_market_data
+from strats import SNakedPut, SShortStraddle, SPhilTownSpy, SymbolData, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth, SBurry
 from util import Timer
 
-def print_results(df, strats):
-    start_date = df.iloc[0]['Date'].to_pydatetime().date()
-    end_date = df.iloc[-1]['Date'].to_pydatetime().date()
+def print_results(df_spy, strats):
+    start_date = df_spy.index.min().to_pydatetime().date()
+    end_date = df_spy.index.max().to_pydatetime().date()
     print("start_date:", start_date, "-> end_date:", end_date)
     for s in strats:
         print(f"{s.__class__.__name__ :<15}:", f"${s.profit_loss():,.0f}")
 
-def market_data(df_stock_data, row):
+def market_data_for_date(today, df_market_data):
     market_data = {}
-    today = row["Date"]
-    for symbol, data in df_stock_data.items():
-        row = data.loc[data["Date"] == today]
-        if len(row) == 1:
-            row = row.iloc[0]
-            market_data[symbol] = stock_data(row)
-        elif len(row) > 1:
-            raise Exception("More than one date found")
+    for symbol, row in df_market_data.loc[today].iterrows():
+        market_data[symbol] = symbol_data(today, row)
     return market_data
 
-def stock_data(row):
-    today = row["Date"].to_pydatetime().date()
+def symbol_data(today, row):
+    today = today.to_pydatetime().date()
     close = row["Adj Close"]
     iv = row["Annualized Volatility"] * 2
     sma_10 = row['sma_10']
     macdsignal = row['macdsignal']
     stochslowk = row['stochslowk']
     stochslowd = row['stochslowd']
-    return TradingData(today, close, iv, sma_10, macdsignal, stochslowk, stochslowd)
+    return SymbolData(today, close, iv, sma_10, macdsignal, stochslowk, stochslowd)
 
 def main():
     t = Timer()
 
-    df_stock_data = load_market_data()
-    #df_stock_data = load_single_market_data("SPY")
-    df = df_stock_data["SPY"]
-    df = df.iloc[20:]
+    df_market_data = load_market_data()
     
-    #strats = [ SNakedPut(), SShortStraddle(), SPhilTown(), SBuyAndHold(), SDollarCostAveraging(), SSaveThousandPerMonth() ]
-    strats = [ SBurry() ]
-    for index, row in df.iterrows():
-        md = market_data(df_stock_data, row)
+    df_spy = df_market_data.xs("SPY", level=1)
+    
+    strats = [ 
+        SNakedPut(), SShortStraddle(), SPhilTownSpy(),  SBurry(),
+        SSaveThousandPerMonth(), SBuyAndHold(), SDollarCostAveraging() 
+    ]
+
+    for today, _ in df_spy.iterrows():
+        md = market_data_for_date(today, df_market_data)
         for s in strats:
             s.run(md)
 
-    print_results(df, strats)
+    print_results(df_spy, strats)
 
     t.stop()
 

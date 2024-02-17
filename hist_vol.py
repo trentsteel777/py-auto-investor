@@ -74,15 +74,14 @@ def share_prices_with_hv(file_name):
     #print(spy_prices[['Date', 'Daily Return', 'Historical Volatility', 'Annualized Volatility']])
     return spy_prices
 
+
 def load_market_data():
-    market_data = {}
+    df_master = pd.DataFrame()
     files = os.listdir(DATA_DIR)
     for f in files:
         symbol = f.replace(".csv", "")
-        market_data[symbol] = share_prices_with_hv(f)
-    return market_data
-
-def load_single_market_data(symbol):
-    market_data = {}
-    market_data[symbol] = share_prices_with_hv(symbol)
-    return market_data
+        df = share_prices_with_hv(f)
+        df["SYMBOL"] = symbol
+        df_master = pd.concat([df_master, df], ignore_index=True)
+    df_master.set_index(['Date', 'SYMBOL'], inplace=True)
+    return df_master

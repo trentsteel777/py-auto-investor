@@ -5,7 +5,7 @@ from util import round_to_nearest_5, third_friday_of_next_month, calc_discounted
 CONTRACT_SIZE=100
 STARTING_CASH=25000
 
-class TradingData:
+class SymbolData:
     def __init__(self, today, close, iv, sma_10, macdsignal, stochslowk, stochslowd):
         self.today = today
         self.close = close
@@ -23,10 +23,10 @@ class SNakedPut:
     def run(self, md):
         sd = md["SPY"]
 
-        if not self.option:
+        if not self.option and sd.iv > 0:
             self.buy(sd.today, sd.close, sd.iv)
 
-        if sd.today >= self.option.expiration:
+        if self.option and sd.today >= self.option.expiration:
             self.sell(sd.today, sd.close)
 
     def buy(self, today, stock_price, iv):     
@@ -53,8 +53,8 @@ class SShortStraddle:
         self.call = None
         self.put = None
 
-    def _isNotOpen(self):
-        return self.call == None and self.put == None
+    def _isNotOpen(self, iv):
+        return self.call == None and self.put == None and iv > 0
 
     def _isExpired(self, today):
         return self.put and today >= self.put.expiration and self.call and today >= self.call.expiration
@@ -62,7 +62,7 @@ class SShortStraddle:
     def run(self, md):
         sd = md["SPY"]
 
-        if self._isNotOpen():
+        if self._isNotOpen(sd.iv):
             self.buy(sd.today, sd.close, sd.iv)
 
         if self._isExpired(sd.today):
@@ -163,7 +163,7 @@ class SBuyAndHold:
     def profit_loss(self):
         return round(self.cash + (self.shares * self.last_close), 2)
 
-class SPhilTown:
+class SPhilTownSpy:
     def __init__(self):
         self.cash=STARTING_CASH
         self.shares = 0
@@ -255,15 +255,15 @@ class SBurry:
         if shares > 0:
             self.shares[symbol]+= shares
             self.cash-= shares * sd.close
-            if symbol == "GOOG":
-                print(self.__class__.__name__, sd.today, symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+            #if symbol == "GOOG":
+            #    print(self.__class__.__name__, sd.today, symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
     
     def sell(self, symbol, sd):
         shares = self.shares[symbol]
         self.cash+= shares * sd.close
         self.shares[symbol] = 0
-        if symbol == "GOOG":
-            print(self.__class__.__name__, sd.today, symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+        #if symbol == "GOOG":
+        #    print(self.__class__.__name__, sd.today, symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
 
     def profit_loss(self):
         share_values = [v * self.last_closes[k] for k,v in self.shares.items()]
