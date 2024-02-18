@@ -2,28 +2,10 @@ import pandas as pd
 import numpy as np
 import talib
 import os
-from util import dotdict
 
 DATA_DIR='data'
 
-
-class DailyMarketData:
-    def __init__(self, today, df_today):
-        self.today = today
-        self.data = {}
-        for symbol, row in df_today.iterrows():
-            d = dotdict(row)
-            d['symbol'] = symbol
-            self.data[symbol] = d
-
-    def get(self, symbol):
-        return self.data.get(symbol)
-
-def market_data_for_date(today, df_market_data):
-    data = df_market_data.loc[today]
-    return DailyMarketData(today, data)
-
-def calculate_daily_returns(prices):
+def _calculate_daily_returns(prices):
     """
     Calculate daily returns from a series of stock prices.
 
@@ -38,7 +20,7 @@ def calculate_daily_returns(prices):
 
     return prices
 
-def calculate_historical_volatility(returns, window=20):
+def _calculate_historical_volatility(returns, window=20):
     """
     Calculate historical volatility from a series of returns.
 
@@ -59,20 +41,20 @@ def calculate_historical_volatility(returns, window=20):
 
     return returns
 
-def calculate_macd(df):
+def _calculate_macd(df):
     df['macdfast'], df['macdslow'], df['macdsignal'] = talib.MACD(df['close'], fastperiod=8, slowperiod=17, signalperiod=9)
     return df
 
-def calculate_stochastic(df):
+def _calculate_stochastic(df):
     df['stochslowk'], df['stochslowd'] = talib.STOCH(df['high'], df['low'], df['close'], fastk_period=14, slowk_period=5, slowd_period=5)
     return df
 
-def calculate_moving_average(df):
+def _calculate_moving_average(df):
     df['sma_10'] = talib.SMA(df['close'], timeperiod=10)
     df['sma_200'] = talib.SMA(df['close'], timeperiod=200)
     return df
 
-def rename_columns(df):
+def _rename_columns(df):
     nc = dict(zip(df.columns, [ c.lower() for c in df.columns]))
     df = df.rename(columns = nc)
     
@@ -81,7 +63,7 @@ def rename_columns(df):
 
     return df
 
-def load_symbol_data(file_name):
+def _load_symbol_data(file_name):
     if not file_name.endswith(".csv"):
         file_name+=".csv"
 
@@ -89,19 +71,19 @@ def load_symbol_data(file_name):
 
     df = pd.read_csv(file_path, parse_dates=['Date'], date_format='%d/%m/%Y')
     
-    df = rename_columns(df)
+    df = _rename_columns(df)
 
     df['date'] = pd.to_datetime(df['date'])
     
-    df = calculate_daily_returns(df)
+    df = _calculate_daily_returns(df)
 
-    df = calculate_historical_volatility(df, window=20)
+    df = _calculate_historical_volatility(df, window=20)
 
-    df = calculate_macd(df)
+    df = _calculate_macd(df)
 
-    df = calculate_stochastic(df)
+    df = _calculate_stochastic(df)
 
-    df = calculate_moving_average(df)
+    df = _calculate_moving_average(df)
 
     return df
 
@@ -111,7 +93,7 @@ def load_market_data():
     files = os.listdir(DATA_DIR)
     for f in files:
         symbol = f.replace(".csv", "")
-        df = load_symbol_data(f)
+        df = _load_symbol_data(f)
         df["symbol"] = symbol
         df_master = pd.concat([df_master, df], ignore_index=True)
     df_master.set_index(['date', 'symbol'], inplace=True)
