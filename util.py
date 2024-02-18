@@ -17,7 +17,7 @@ def third_friday_of_next_month(date):
     # Calculate the third Friday of next month
     third_friday_of_next_month = first_day_of_next_month + timedelta(days=days_to_third_friday)
 
-    return third_friday_of_next_month.date()
+    return third_friday_of_next_month
 
 
 class Timer:
@@ -69,10 +69,10 @@ inflation_data = {
     2024: 8.0028,
 }
 
-def calc_discounted_saving(td):
+def calc_discounted_saving(today):
     future_value = 1000                       # Future value (amount to be discounted)
-    years = date.today().year - td.today.year # Number of years
-    r = inflation_data[td.today.year] / 100   
+    years = date.today().year - today.year # Number of years
+    r = inflation_data[today.year] / 100   
     discount_rate = r                         # Average annual inflation rate
 
     present_value = future_value / (1 + discount_rate) ** years
@@ -87,3 +87,10 @@ def calc_call_margin(prem, vol, stock_price, strike, contract_size=100):
 
 def calc_put_margin(prem, vol, stock_price, strike, contract_size=100):
     return min(2 * (prem + vol * max(2 * strike - stock_price, strike)) * contract_size, strike* contract_size)
+
+# https://stackoverflow.com/questions/2352181/how-to-use-a-dot-to-access-members-of-dictionary
+class dotdict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__

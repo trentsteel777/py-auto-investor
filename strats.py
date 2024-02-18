@@ -16,13 +16,13 @@ class SNakedPut:
         self.option = None
 
     def run(self, md):
-        sd = md["SPY"]
+        sd = md.get("SPY")
+
+        if self.option and md.today >= self.option.expiration:
+            self.sell(md.today, sd.close)
 
         if not self.option and sd.iv > 0:
-            self.buy(sd.today, sd.close, sd.iv)
-
-        if self.option and sd.today >= self.option.expiration:
-            self.sell(sd.today, sd.close)
+            self.buy(md.today, sd.close, sd.iv)
 
     def buy(self, today, stock_price, iv):     
         strike = round_to_nearest_5(stock_price  * 0.90)
@@ -55,13 +55,14 @@ class SShortStraddle:
         return self.put and today >= self.put.expiration and self.call and today >= self.call.expiration
 
     def run(self, md):
-        sd = md["SPY"]
+        sd = md.get("SPY")
+
+        if self._isExpired(md.today):
+            self.sell(md.today, sd.close)
 
         if self._isNotOpen(sd.iv):
-            self.buy(sd.today, sd.close, sd.iv)
+            self.buy(md.today, sd.close, sd.iv)
 
-        if self._isExpired(sd.today):
-            self.sell(sd.today, sd.close)
 
     def buy(self, today, stock_price, iv):
         expiration = third_friday_of_next_month(today)
@@ -109,10 +110,10 @@ class SSaveThousandPerMonth:
         self.last_month_purchased=0
 
     def run(self, md):
-        sd = md["SPY"]
-        if sd.today.month != self.last_month_purchased:
-            self.cash+=calc_discounted_saving(sd)
-            self.last_month_purchased=sd.today.month
+        sd = md.get("SPY")
+        if md.today.month != self.last_month_purchased:
+            self.cash+=calc_discounted_saving(md.today)
+            self.last_month_purchased=md.today.month
 
     def profit_loss(self):
         return round(self.cash, 2)
@@ -125,18 +126,18 @@ class SDollarCostAveraging:
         self.last_month_purchased=0
 
     def run(self, md):
-        sd = md["SPY"]
+        sd = md.get("SPY")
         self.last_close = sd.close
-        if sd.today.month != self.last_month_purchased:
-            self.cash+=calc_discounted_saving(sd)
-            self.last_month_purchased=sd.today.month
+        if md.today.month != self.last_month_purchased:
+            self.cash+=calc_discounted_saving(md.today)
+            self.last_month_purchased=md.today.month
             self.buy(sd)
 
     def buy(self, sd):
         shares_to_purchase = int(self.cash / sd.close)
         self.cash-= shares_to_purchase * sd.close
         self.shares+= shares_to_purchase
-        #print(self.__class__.__name__ + " buy", sd.today, self.shares)  
+        #print(self.__class__.__name__ + " buy", md.today, self.shares)  
 
     def profit_loss(self):
         return round(self.cash + (self.shares * self.last_close), 2)
@@ -149,15 +150,15 @@ class SBuyAndHold:
         self.last_close = None
 
     def run(self, md):
-        sd = md["SPY"]
+        sd = md.get("SPY")
         self.last_close = sd.close
         if self.shares == 0:
-            self.buy(sd)
+            self.buy(md.today, sd)
 
-    def buy(self, sd):
+    def buy(self, today, sd):
         self.shares = int(self.cash / sd.close)
         self.cash-= self.shares * sd.close
-        print(self.__class__.__name__ + " buy", sd.today, self.shares)  
+        print(self.__class__.__name__ + " buy", today, self.shares)  
 
     def profit_loss(self):
         return round(self.cash + (self.shares * self.last_close), 2)
@@ -175,64 +176,63 @@ class Portfolio(Enum):
 
     SPY = ['SPY']
 
-class Log(Enum):
+class LogLevel(Enum):
     DEBUG = auto()
     NONE = auto()
  
 class SStock(ABC):
-    def __init__(self, watchlist, log=Log.NONE):
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
         self.cash=STARTING_CASH
         self.shares = {}
         self.last_closes = {}
         self.watchlist = watchlist.value
-        self.log = log
+        self.log_level = log_level
         
         for w in self.watchlist:
             self.shares[w] = 0
     
     @abstractmethod
-    def _isBuy(self, symbol, sd):
+    def _isBuy(self, sd):
         pass
 
     @abstractmethod
-    def _isSell(self, symbol, sd):
+    def _isSell(self, sd):
         pass
 
     def run(self, md):
         buys = []
         for w in self.watchlist:
-            if w in md:
-                sd = md[w]
+            sd = md.get(w)
+            if sd:
                 self.last_closes[w] = sd.close
 
-                if self._isBuy(w, sd):
-                    buys.append(w)
+                if self._isSell(sd):
+                    self.sell(md.today, sd)
 
-                if self._isSell(w, sd):
-                    self.sell(w, sd)
+                if self._isBuy(sd):
+                    buys.append(sd)
         
         if len(buys) > 0:
             cash_per_stock = self.cash / len(buys)
-            for w in buys:
-                sd = md[w]
-                self.buy(w, sd, cash_per_stock)
+            for sd in buys:
+                self.buy(md.today, sd, cash_per_stock)
 
-    def buy(self, symbol, sd, cash_per_stock):
+    def buy(self, today, sd, cash_per_stock):
         shares = int(cash_per_stock / sd.close)
         if shares > 0:
-            self.shares[symbol]+= shares
+            self.shares[sd.symbol]+= shares
             self.cash-= shares * sd.close
             #if symbol == "GOOG":
-            if Log.DEBUG == self.log:
-                print(self.__class__.__name__, sd.today, symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+            if LogLevel.DEBUG == self.log_level:
+                print(self.__class__.__name__, today, sd.symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
     
-    def sell(self, symbol, sd):
-        shares = self.shares[symbol]
+    def sell(self, today, sd):
+        shares = self.shares[sd.symbol]
         self.cash+= shares * sd.close
-        self.shares[symbol] = 0
+        self.shares[sd.symbol] = 0
         #if symbol == "GOOG":
-        if Log.DEBUG == self.log:
-            print(self.__class__.__name__, sd.today, symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+        if LogLevel.DEBUG == self.log_level:
+            print(self.__class__.__name__, today, sd.symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
 
     def profit_loss(self):
         share_values = [v * self.last_closes[k] for k,v in self.shares.items()]
@@ -240,36 +240,36 @@ class SStock(ABC):
         return round(self.cash + portfolio_value, 2)
     
 class SPhilTown(SStock):
-    def __init__(self, watchlist, log=Log.NONE):
-        super().__init__(watchlist, log)
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        super().__init__(watchlist, log_level)
 
     @override
-    def _isBuy(self, symbol, sd):
+    def _isBuy(self, sd):
         isBuyMaCrossOver = sd.close > sd.sma_10
         isBuyMacdCrossOver = sd.macdsignal > 0
         isBuyStochasticCrossOver = sd.stochslowk > sd.stochslowd
         return isBuyMaCrossOver and isBuyMacdCrossOver and isBuyStochasticCrossOver
     
     @override
-    def _isSell(self, symbol, sd):
+    def _isSell(self, sd):
         isSellMaCrossOver = sd.close < sd.sma_10
         isSellMacdCrossOver = sd.macdsignal < 0
         isSellStochasticCrossOver = sd.stochslowk < sd.stochslowd
-        return isSellMaCrossOver and isSellMacdCrossOver and isSellStochasticCrossOver and self.shares[symbol] > 0
+        return isSellMaCrossOver and isSellMacdCrossOver and isSellStochasticCrossOver and self.shares[sd.symbol] > 0
 
 
 class SStockTwoHundredSMA(SStock):
-    def __init__(self, watchlist, log=Log.NONE):
-        super().__init__(watchlist, log)
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        super().__init__(watchlist, log_level)
 
     @override
-    def _isBuy(self, symbol, sd):
+    def _isBuy(self, sd):
         isBuyMaCrossOver = sd.close > sd.sma_10 and sd.sma_10 > sd.sma_200
         return isBuyMaCrossOver
 
     @override
-    def _isSell(self, symbol, sd):
+    def _isSell(self, sd):
         isSellMaCrossOver = sd.close < sd.sma_10 and sd.sma_10 < sd.sma_200
-        return isSellMaCrossOver and self.shares[symbol] > 0
+        return isSellMaCrossOver and self.shares[sd.symbol] > 0
 
 # EO: Stock strategies

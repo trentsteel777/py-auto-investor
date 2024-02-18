@@ -2,50 +2,39 @@ import pandas as pd
 import numpy as np
 import talib
 import os
+from util import dotdict
 
 DATA_DIR='data'
 
-class SymbolData:
-    def __init__(self, today, close, iv, sma_10, sma_200, macdsignal, stochslowk, stochslowd):
+
+class DailyMarketData:
+    def __init__(self, today, df_today):
         self.today = today
-        self.close = close
-        self.iv = iv
-        self.sma_10 = sma_10
-        self.sma_200 = sma_200
-        self.macdsignal = macdsignal
-        self.stochslowk = stochslowk
-        self.stochslowd = stochslowd
+        self.data = {}
+        for symbol, row in df_today.iterrows():
+            d = dotdict(row)
+            d['symbol'] = symbol
+            self.data[symbol] = d
+
+    def get(self, symbol):
+        return self.data.get(symbol)
 
 def market_data_for_date(today, df_market_data):
-    market_data = {}
-    for symbol, row in df_market_data.loc[today].iterrows():
-        market_data[symbol] = symbol_data(today, row)
-    return market_data
-
-def symbol_data(today, row):
-    today = today.to_pydatetime().date()
-    close = row["Adj Close"]
-    iv = row["Annualized Volatility"] * 2
-    sma_10 = row['sma_10']
-    sma_200 = row['sma_200']
-    macdsignal = row['macdsignal']
-    stochslowk = row['stochslowk']
-    stochslowd = row['stochslowd']
-    return SymbolData(today, close, iv, sma_10, sma_200, macdsignal, stochslowk, stochslowd)
-
+    data = df_market_data.loc[today]
+    return DailyMarketData(today, data)
 
 def calculate_daily_returns(prices):
     """
     Calculate daily returns from a series of stock prices.
 
     Args:
-    - prices: A pandas DataFrame with 'Date' and 'Adj Close' columns.
+    - prices: A pandas DataFrame with 'Date' and 'close' columns.
 
     Returns:
     - A pandas DataFrame with 'Date' and 'Daily Return' columns.
     """
     # Calculate the daily returns
-    prices['Daily Return'] = prices['Adj Close'].pct_change()
+    prices['daily_return'] = prices['close'].pct_change()
 
     return prices
 
@@ -61,24 +50,35 @@ def calculate_historical_volatility(returns, window=20):
     - A pandas DataFrame with 'Date' and 'Historical Volatility' columns.
     """
     # Calculate the rolling standard deviation of returns
-    returns['Historical Volatility'] = returns['Daily Return'].rolling(window=window).std()
+    returns['historical_volatility'] = returns['daily_return'].rolling(window=window).std()
     
     # Calculate the annualized volatility (assuming 252 trading days in a year)
-    returns['Annualized Volatility'] = returns['Historical Volatility'] * np.sqrt(252)
+    returns['annualized_volatility'] = returns['historical_volatility'] * np.sqrt(252)
+
+    returns['iv'] = returns['annualized_volatility'] * 2
 
     return returns
 
 def calculate_macd(df):
-    df['macdfast'], df['macdslow'], df['macdsignal'] = talib.MACD(df['Adj Close'], fastperiod=8, slowperiod=17, signalperiod=9)
+    df['macdfast'], df['macdslow'], df['macdsignal'] = talib.MACD(df['close'], fastperiod=8, slowperiod=17, signalperiod=9)
     return df
 
 def calculate_stochastic(df):
-    df['stochslowk'], df['stochslowd'] = talib.STOCH(df['High'], df['Low'], df['Adj Close'], fastk_period=14, slowk_period=5, slowd_period=5)
+    df['stochslowk'], df['stochslowd'] = talib.STOCH(df['high'], df['low'], df['close'], fastk_period=14, slowk_period=5, slowd_period=5)
     return df
 
 def calculate_moving_average(df):
-    df['sma_10'] = talib.SMA(df['Adj Close'], timeperiod=10)
-    df['sma_200'] = talib.SMA(df['Adj Close'], timeperiod=200)
+    df['sma_10'] = talib.SMA(df['close'], timeperiod=10)
+    df['sma_200'] = talib.SMA(df['close'], timeperiod=200)
+    return df
+
+def rename_columns(df):
+    nc = dict(zip(df.columns, [ c.lower() for c in df.columns]))
+    df = df.rename(columns = nc)
+    
+    df['close'] = df['adj close']
+    df.drop(columns=['adj close'])
+
     return df
 
 def load_symbol_data(file_name):
@@ -89,7 +89,9 @@ def load_symbol_data(file_name):
 
     df = pd.read_csv(file_path, parse_dates=['Date'], date_format='%d/%m/%Y')
     
-    df['Date'] = pd.to_datetime(df['Date'])
+    df = rename_columns(df)
+
+    df['date'] = pd.to_datetime(df['date'])
     
     df = calculate_daily_returns(df)
 
@@ -110,7 +112,7 @@ def load_market_data():
     for f in files:
         symbol = f.replace(".csv", "")
         df = load_symbol_data(f)
-        df["SYMBOL"] = symbol
+        df["symbol"] = symbol
         df_master = pd.concat([df_master, df], ignore_index=True)
-    df_master.set_index(['Date', 'SYMBOL'], inplace=True)
+    df_master.set_index(['date', 'symbol'], inplace=True)
     return df_master
