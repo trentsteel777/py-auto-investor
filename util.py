@@ -94,3 +94,10 @@ class dotdict(dict):
     __getattr__ = dict.get
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+
+def print_results(df_spy, strats):
+    start_date = df_spy.index.min().to_pydatetime().date()
+    end_date = df_spy.index.max().to_pydatetime().date()
+    print("start_date:", start_date, "-> end_date:", end_date)
+    for s in strats:
+        print(f"{s.__class__.__name__ :<15}:", f"${s.profit_loss():,.0f}")
