@@ -18,3 +18,9 @@ $('.screeningdata tbody tr td:nth-child(2)').each( function(){
    items.push( $(this).text() );       
 });
 console.log(items)
+
+
+APIS:
+    https://app.simfin.com/subscription/select
+
+    https://data.nasdaq.com/
