@@ -1,6 +1,6 @@
 from data_loader import load_market_data
 from mapper import market_data_for_date
-from strats import Portfolio, SNakedPut, SShortStraddle, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth, SPhilTown, SStockTwoHundredSMA
+from strats import Portfolio, SNakedPut, SShortStraddle, SBuyAndHold, SDollarCostAveraging, SSaveThousandPerMonth, SPhilTown, SStockTwoHundredSMA, SForexEurUsd
 from util import Timer, print_results
 
 def main():
@@ -12,15 +12,18 @@ def main():
     
     strats = [ 
         # Option strategies
-        SNakedPut(), 
-        SShortStraddle(), 
+        #SNakedPut(), 
+        #SShortStraddle(), 
 
         # Stock strategies
-        SPhilTown(Portfolio.SPY),
-        SPhilTown(Portfolio.BURRY), 
-        SPhilTown(Portfolio.GREENBLAT),
-        SStockTwoHundredSMA(Portfolio.GREENBLAT),
-        SStockTwoHundredSMA(Portfolio.SPY),
+        #SPhilTown(Portfolio.SPY),
+        #SPhilTown(Portfolio.BURRY), 
+        #SPhilTown(Portfolio.GREENBLAT),
+        #SStockTwoHundredSMA(Portfolio.GREENBLAT),
+        #SStockTwoHundredSMA(Portfolio.SPY),
+
+        # Forex strategies
+        SForexEurUsd(Portfolio.EURUSD),
 
         # Benchmark strategies
         SBuyAndHold(),

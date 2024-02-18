@@ -176,6 +176,8 @@ class Portfolio(Enum):
 
     SPY = ['SPY']
 
+    EURUSD = ['EURUSD']
+
 class LogLevel(Enum):
     DEBUG = auto()
     NONE = auto()
@@ -273,3 +275,19 @@ class SStockTwoHundredSMA(SStock):
         return isSellMaCrossOver and self.shares[sd.symbol] > 0
 
 # EO: Stock strategies
+    
+# SO: Forex strategies
+class SForexEurUsd(SStock):
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        super().__init__(watchlist, log_level)
+
+    @override
+    def _isBuy(self, sd):
+        isBuyMaCrossOver = sd.close > sd.sma_10
+        return isBuyMaCrossOver
+
+    @override
+    def _isSell(self, sd):
+        isSellMaCrossOver = sd.close < sd.sma_10
+        return isSellMaCrossOver and self.shares[sd.symbol] > 0
+# SO: Forex strategies
