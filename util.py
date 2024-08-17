@@ -1,5 +1,18 @@
 from datetime import datetime, timedelta, date
 import time
+from collections import Counter
+
+def percentage_difference(num1, num2):
+    # Calculate the absolute difference
+    difference = abs(num1 - num2)
+    
+    # Calculate the average of the two numbers
+    average = (num1 + num2) / 2
+    
+    # Calculate the percentage difference
+    percentage_diff = (difference / average) * 100
+    
+    return percentage_diff
 
 def round_to_nearest_5(num):
     return round(num / 5) * 5
@@ -101,3 +114,20 @@ def print_results(df_spy, strats):
     print("start_date:", start_date, "-> end_date:", end_date)
     for s in strats:
         print(f"{s.__class__.__name__ :<15}:", f"${s.profit_loss():,.0f}")
+
+def print_results_with_portfolio(df_spy, symbol_map):
+    start_date = df_spy.index.min().to_pydatetime().date()
+    end_date = df_spy.index.max().to_pydatetime().date()
+    print("start_date:", start_date, "-> end_date:", end_date)
+
+    for _, strats in symbol_map.items():
+        for s in strats:
+            print(f"{s.__class__.__name__ :<8} -", f"{s.watchlist[0] :<5}:", f"${s.profit_loss():,.0f}")
+
+    most_profitable_strategies = [ max(v, key=lambda s: s.profit_loss()) for k, v in symbol_map.items() ]
+    most_profitable_strategies = [ s.__class__.__name__ for s in most_profitable_strategies ]
+    strategy_winning_counts = Counter(most_profitable_strategies)
+    total_count = sum(strategy_winning_counts.values())
+    for k, v in strategy_winning_counts.items():
+        print(k, v / total_count)
+    print("total symbol count:", total_count)

@@ -1,0 +1,109 @@
+start_date: 1993-02-01 -> end_date: 2024-02-09
+SBuyAndHold - AMCX : $10,160
+SStopLoss__ - AMCX : $16,792
+SBuyAndHold - AMZN : $50,443,438
+SStopLoss__ - AMZN : $50,443,438
+SBuyAndHold - ASRT : $1,343
+SStopLoss__ - ASRT : $9,849
+SBuyAndHold - BABA : $20,314
+SStopLoss__ - BABA : $21,821
+SBuyAndHold - BKE  : $1,326,654
+SStopLoss__ - BKE  : $1,326,654
+SBuyAndHold - BKNG : $192,034
+SStopLoss__ - BKNG : $55,418
+SBuyAndHold - BRKR : $76,177
+SStopLoss__ - BRKR : $35,725
+SBuyAndHold - BTMD : $9,929
+SStopLoss__ - BTMD : $4,320
+SBuyAndHold - C    : $59,782
+SStopLoss__ - C    : $101,726
+SBuyAndHold - CCSI : $13,896
+SStopLoss__ - CCSI : $23,979
+SBuyAndHold - COLL : $68,100
+SStopLoss__ - COLL : $22,711
+SBuyAndHold - CPRX : $55,899
+SStopLoss__ - CPRX : $6,343
+SBuyAndHold - CROX : $188,316
+SStopLoss__ - CROX : $188,977
+SBuyAndHold - CVS  : $284,527
+SStopLoss__ - CVS  : $44,810
+SBuyAndHold - EURUSD: $22,287
+SStopLoss__ - EURUSD: $18,514
+SBuyAndHold - GOOG : $1,392,090
+SStopLoss__ - GOOG : $616,058
+SBuyAndHold - HCA  : $325,312
+SStopLoss__ - HCA  : $160,240
+SBuyAndHold - HPQ  : $386,116
+SStopLoss__ - HPQ  : $48,364
+SBuyAndHold - HRMY : $22,502
+SStopLoss__ - HRMY : $10,115
+SBuyAndHold - HSII : $77,749
+SStopLoss__ - HSII : $23,371
+SBuyAndHold - IMMR : $9,810
+SStopLoss__ - IMMR : $76,564
+SBuyAndHold - JAKK : $17,457
+SStopLoss__ - JAKK : $2,768
+SBuyAndHold - JD   : $28,966
+SStopLoss__ - JD   : $9,911
+SBuyAndHold - JILL : $11,910
+SStopLoss__ - JILL : $12,003
+SBuyAndHold - MCFT : $46,878
+SStopLoss__ - MCFT : $20,114
+SBuyAndHold - MD   : $42,460
+SStopLoss__ - MD   : $26,657
+SBuyAndHold - MED  : $321,664
+SStopLoss__ - MED  : $4,979
+SBuyAndHold - MGM  : $189,579
+SStopLoss__ - MGM  : $51,212
+SBuyAndHold - MO   : $928,466
+SStopLoss__ - MO   : $900,310
+SBuyAndHold - MTD  : $1,925,027
+SStopLoss__ - MTD  : $343,977
+SBuyAndHold - NXST : $383,696
+SStopLoss__ - NXST : $114,648
+SBuyAndHold - OCUP : $220
+SStopLoss__ - OCUP : $717
+SBuyAndHold - ORCL : $4,286,287
+SStopLoss__ - ORCL : $4,286,287
+SBuyAndHold - PLTK : $5,686
+SStopLoss__ - PLTK : $15,738
+SBuyAndHold - PRDO : $190,604
+SStopLoss__ - PRDO : $18,370
+SBuyAndHold - QRTEA: $2,319
+SStopLoss__ - QRTEA: $18,107
+SBuyAndHold - RMNI : $8,334
+SStopLoss__ - RMNI : $13,421
+SBuyAndHold - SB   : $10,141
+SStopLoss__ - SB   : $13,988
+SBuyAndHold - SBLK : $1,581
+SStopLoss__ - SBLK : $21,505
+SBuyAndHold - SCYX : $602
+SStopLoss__ - SCYX : $17,296
+SBuyAndHold - SPRO : $2,988
+SStopLoss__ - SPRO : $7,243
+SBuyAndHold - SURG : $3,551
+SStopLoss__ - SURG : $23,425
+SBuyAndHold - TZOO : $31,000
+SStopLoss__ - TZOO : $4,796
+SBuyAndHold - UIS  : $1,416
+SStopLoss__ - UIS  : $15,073
+SBuyAndHold - UNTC : $190,651
+SStopLoss__ - UNTC : $106,598
+SBuyAndHold - VTLE : $3,036
+SStopLoss__ - VTLE : $29,180
+SBuyAndHold - VYGR : $10,709
+SStopLoss__ - VYGR : $25,062
+SBuyAndHold - WBD  : $30,725
+SStopLoss__ - WBD  : $71,606
+SBuyAndHold - ZYME : $21,442
+SStopLoss__ - ZYME : $71,997
+Execution time: 43.48 seconds
+
+
+Portfolio["BURRY"] = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
+start_date: 1993-02-01 -> end_date: 2024-02-09
+SBuyAndHold    : $11,382,229
+SStopLoss__    : $283,247
+start_date: 1993-02-01 -> end_date: 2024-02-09
+total symbol count: 0
+Execution time: 40.2 seconds

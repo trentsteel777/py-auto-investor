@@ -16,7 +16,7 @@ def _calculate_daily_returns(prices):
     - A pandas DataFrame with 'Date' and 'Daily Return' columns.
     """
     # Calculate the daily returns
-    prices['daily_return'] = prices['close'].pct_change()
+    prices['daily_return'] = prices['close'].pct_change(fill_method=None)
 
     return prices
 
@@ -51,7 +51,9 @@ def _calculate_stochastic(df):
 
 def _calculate_moving_average(df):
     df['sma_10'] = talib.SMA(df['close'], timeperiod=10)
+    df['sma_50'] = talib.SMA(df['close'], timeperiod=50)
     df['sma_200'] = talib.SMA(df['close'], timeperiod=200)
+    df['rsi'] = talib.RSI(df['close'], timeperiod=14)
     return df
 
 def _rename_columns(df):
@@ -86,6 +88,9 @@ def _load_symbol_data(file_name):
     df = _calculate_moving_average(df)
 
     return df
+
+def get_symbols():
+    return [ f.replace(".csv", "") for f in os.listdir(DATA_DIR) ]
 
 
 def load_market_data():

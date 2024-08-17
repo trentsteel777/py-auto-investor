@@ -1,12 +1,83 @@
 from opt_pricer import put, call
 from opt import Option, calc_short_put_profit_loss, calc_short_call_profit_loss
-from util import round_to_nearest_5, third_friday_of_next_month, calc_discounted_saving, calc_put_margin, calc_call_margin
+from util import round_to_nearest_5, third_friday_of_next_month, calc_discounted_saving, calc_put_margin, calc_call_margin, percentage_difference, dotdict
 from enum import Enum, auto
 from overrides import override
 from abc import ABC, abstractmethod
 
 CONTRACT_SIZE=100
 STARTING_CASH=25000
+
+class LogLevel(Enum):
+    DEBUG = auto()
+    NONE = auto()
+
+Portfolio = dotdict()
+# Michael Burry - https://twitter.com/burrytracker/status/1691435571783090176
+Portfolio["BURRY"] = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
+# Joel Greenblatt - https://www.magicformulainvesting.com/Screening/StockScreening
+Portfolio["GREENBLAT"] = ['AMCX', 'ASRT', 'BKE', 'BTMD', 'CCSI', 'COLL', 'CPRX', 'CROX', 'HPQ', 'HRMY', 'HSII', 'IMMR', 'JAKK', 'JILL', 'MCFT', 'MD', 'MED', 'MO', 'OCUP', 'PLTK', 'PRDO', 'RMNI', 'SCYX', 'SPRO', 'SURG', 'TZOO', 'UIS', 'UNTC', 'VYGR', 'ZYME']
+Portfolio["SPY"] = ['SPY']
+Portfolio["EURUSD"] = ['EURUSD']
+
+class SStock(ABC):
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        self.cash=STARTING_CASH
+        self.shares = {}
+        self.last_closes = {}
+        self.watchlist = watchlist
+        self.log_level = log_level
+        
+        for w in self.watchlist:
+            self.shares[w] = 0
+    
+    @abstractmethod
+    def _isBuy(self, sd):
+        pass
+
+    @abstractmethod
+    def _isSell(self, sd):
+        pass
+
+    def run(self, md):
+        buys = []
+        for w in self.watchlist:
+            sd = md.get(w)
+            if sd:
+                self.last_closes[w] = sd.close
+                
+                if self._isSell(sd):
+                    self.sell(md.today, sd)
+
+                if self._isBuy(sd):
+                    buys.append(sd)
+        
+        if len(buys) > 0:
+            cash_per_stock = self.cash / len(buys)
+            for sd in buys:
+                self.buy(md.today, sd, cash_per_stock)
+
+    def buy(self, today, sd, cash_per_stock):
+        shares = int(cash_per_stock / sd.close)
+        if shares > 0:
+            self.shares[sd.symbol]+= shares
+            self.cash-= shares * sd.close
+            #if symbol == "GOOG":
+            if LogLevel.DEBUG == self.log_level:
+                print(self.__class__.__name__, today, sd.symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+    
+    def sell(self, today, sd):
+        shares = self.shares[sd.symbol]
+        self.cash+= shares * sd.close
+        self.shares[sd.symbol] = 0
+        #if symbol == "GOOG":
+        if LogLevel.DEBUG == self.log_level:
+            print(self.__class__.__name__, today, sd.symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+
+    def profit_loss(self):
+        share_values = [v * self.last_closes[k] for k,v in self.shares.items()]
+        portfolio_value=sum(share_values)
+        return round(self.cash + portfolio_value, 2)
 
 # SO: Option strategies
 
@@ -102,6 +173,8 @@ class SShortStraddle:
 
 # EO: Option strategies
 
+
+
 # SO: Benchmark strategies
 
 class SSaveThousandPerMonth:
@@ -143,103 +216,43 @@ class SDollarCostAveraging:
         return round(self.cash + (self.shares * self.last_close), 2)
 
 
-class SBuyAndHold:
-    def __init__(self):
-        self.cash=STARTING_CASH
-        self.shares = 0
-        self.last_close = None
-
-    def run(self, md):
-        sd = md.get("SPY")
-        self.last_close = sd.close
-        if self.shares == 0:
-            self.buy(md.today, sd)
-
-    def buy(self, today, sd):
-        self.shares = int(self.cash / sd.close)
-        self.cash-= self.shares * sd.close
-        print(self.__class__.__name__ + " buy", today, self.shares)  
-
-    def profit_loss(self):
-        return round(self.cash + (self.shares * self.last_close), 2)
-
-# EO: Benchmark strategies
-
-# SO: Stock strategies
-
-class Portfolio(Enum):
-    # Michael Burry - https://twitter.com/burrytracker/status/1691435571783090176
-    BURRY = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
-
-    # Joel Greenblatt - https://www.magicformulainvesting.com/Screening/StockScreening
-    GREENBLAT = ['AMCX', 'ASRT', 'BKE', 'BTMD', 'CCSI', 'COLL', 'CPRX', 'CROX', 'HPQ', 'HRMY', 'HSII', 'IMMR', 'JAKK', 'JILL', 'MCFT', 'MD', 'MED', 'MO', 'OCUP', 'PLTK', 'PRDO', 'RMNI', 'SCYX', 'SPRO', 'SURG', 'TZOO', 'UIS', 'UNTC', 'VYGR', 'ZYME']
-
-    SPY = ['SPY']
-
-    EURUSD = ['EURUSD']
-
-class LogLevel(Enum):
-    DEBUG = auto()
-    NONE = auto()
- 
-class SStock(ABC):
+class SBuyAndHold(SStock):
     def __init__(self, watchlist, log_level=LogLevel.NONE):
-        self.cash=STARTING_CASH
-        self.shares = {}
-        self.last_closes = {}
-        self.watchlist = watchlist.value
-        self.log_level = log_level
-        
-        for w in self.watchlist:
-            self.shares[w] = 0
-    
-    @abstractmethod
-    def _isBuy(self, sd):
-        pass
+        super().__init__(watchlist, log_level)
 
-    @abstractmethod
-    def _isSell(self, sd):
-        pass
-
+    @override
     def run(self, md):
         buys = []
         for w in self.watchlist:
             sd = md.get(w)
             if sd:
                 self.last_closes[w] = sd.close
-
-                if self._isSell(sd):
+                buys.append(sd)
+       
+        open_positions_count = sum(1 for i in self.shares.values() if i)
+        if len(buys) > open_positions_count:
+            for w in self.watchlist:
+                sd = md.get(w)
+                if sd and self.shares[sd.symbol] > 0:
                     self.sell(md.today, sd)
-
-                if self._isBuy(sd):
-                    buys.append(sd)
-        
-        if len(buys) > 0:
+            
             cash_per_stock = self.cash / len(buys)
             for sd in buys:
                 self.buy(md.today, sd, cash_per_stock)
 
-    def buy(self, today, sd, cash_per_stock):
-        shares = int(cash_per_stock / sd.close)
-        if shares > 0:
-            self.shares[sd.symbol]+= shares
-            self.cash-= shares * sd.close
-            #if symbol == "GOOG":
-            if LogLevel.DEBUG == self.log_level:
-                print(self.__class__.__name__, today, sd.symbol, ":", shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
-    
-    def sell(self, today, sd):
-        shares = self.shares[sd.symbol]
-        self.cash+= shares * sd.close
-        self.shares[sd.symbol] = 0
-        #if symbol == "GOOG":
-        if LogLevel.DEBUG == self.log_level:
-            print(self.__class__.__name__, today, sd.symbol, ":", -shares, ":", round(sd.close,2), ":", round(shares * sd.close,2))
+    @override
+    def _isBuy(self, sd):
+        pass
 
-    def profit_loss(self):
-        share_values = [v * self.last_closes[k] for k,v in self.shares.items()]
-        portfolio_value=sum(share_values)
-        return round(self.cash + portfolio_value, 2)
+    @override
+    def _isSell(self, sd):
+        pass
+
+# EO: Benchmark strategies
+
+# SO: Stock strategies
+
+
     
 class SPhilTown(SStock):
     def __init__(self, watchlist, log_level=LogLevel.NONE):
@@ -273,6 +286,106 @@ class SStockTwoHundredSMA(SStock):
     def _isSell(self, sd):
         isSellMaCrossOver = sd.close < sd.sma_10 and sd.sma_10 < sd.sma_200
         return isSellMaCrossOver and self.shares[sd.symbol] > 0
+
+class SStockFiftySMA(SStock):
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        super().__init__(watchlist, log_level)
+
+    @override
+    def _isBuy(self, sd):
+        isBuyMaCrossOver = sd.close > sd.sma_50
+        return isBuyMaCrossOver
+
+    @override
+    def _isSell(self, sd):
+        isSellMaCrossOver = sd.close < sd.sma_50
+        return isSellMaCrossOver and self.shares[sd.symbol] > 0
+
+def nearest_integers_divisible_by_ten(number):
+    #divisor=number*0.25
+    #below = math.floor(number / divisor) * divisor
+    #above = math.ceil(number / divisor) * divisor
+    p = 0.075
+    below = number * (1 - p)
+    above = number * (1 + p)
+    return below, above
+
+class SDarvas(SStock):
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        super().__init__(watchlist, log_level)
+        self.below = 0
+        self.above = 0
+        self.day_reset = 0
+    @override
+    def _isBuy(self, sd):
+
+        isBoxBreakOutAbove = sd.close > self.above# and sd.close > sd.sma_50
+
+        if not isBoxBreakOutAbove and  sd.close < (self.above * 0.6):
+            isBoxBreakOutAbove = True
+
+        if isBoxBreakOutAbove:
+            self.below, self.above = nearest_integers_divisible_by_ten(sd.close)
+
+        return isBoxBreakOutAbove
+    
+    @override
+    def _isSell(self, sd):
+        isBoxBreakOutBelow = sd.close < self.below
+
+        #self.day_reset+=1
+        #if self.day_reset == 60:
+        #    self.below = 0
+        #    self.above = 0
+
+        return isBoxBreakOutBelow and self.shares[sd.symbol] > 0
+
+class SRsi(SStock):
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        super().__init__(watchlist, log_level)
+        self.upper = 80
+        self.lower = 20
+
+    @override
+    def _isBuy(self, sd):
+        return sd.rsi > self.lower and sd.rsi < self.upper
+    
+    @override
+    def _isSell(self, sd):
+        return sd.rsi > self.upper and self.shares[sd.symbol] > 0
+
+class SStopLoss__(SStock):
+    def __init__(self, watchlist, log_level=LogLevel.NONE):
+        super().__init__(watchlist, log_level)
+        self.sell_price = 0
+        self.buy_price = None
+        self.stop_price = None
+
+    @override
+    def _isBuy(self, sd):
+        if self.shares[sd.symbol] > 0:
+            return False
+
+        if sd.close > self.sell_price:
+            self.buy_price = sd.close
+            self.stop_price = int(sd.close * 0.97)
+            return True
+        else:
+            return False
+    
+    @override
+    def _isSell(self, sd):
+        if not self.shares[sd.symbol] > 0:
+            return False
+        
+        if percentage_difference(sd.close, self.stop_price) >= 20:
+            self.stop_price = (self.stop_price * 1.1)
+
+        if sd.close < self.stop_price:
+            self.sell_price = sd.close
+            return True
+        else:
+            return False
 
 # EO: Stock strategies
     
