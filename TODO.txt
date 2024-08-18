@@ -1,3 +1,4 @@
+20240817
 DONE - Add more stocks
 
 DONE - have a way to compare individual stocks with SStopLoss__ VS SBuyAndHold
@@ -15,3 +16,26 @@ https://www.youtube.com/watch?v=mSRUqxX963w
 https://www.youtube.com/watch?v=2CkpmA90F5M
 
 DONE - Add in rebuys on swings when RSI is oversold
+
+20240818
+The main key to this is to pick WINNING STOCKS
+
+Add in a much bigger universe of stocks
+
+Add more metrics to output
+    Total trades
+    Biggest drawdown
+    Peak portfolio value
+
+Add in experimenter to fine tune SStopLoss__ parameters
+    rerun across:
+        self.stop_price percentage
+        self.lower for RSI
+    results should print
+        the best paramaters across the greatest number of stocks that will work favourably 
+            in different market conditions 
+
+What's the expected value of the strategy? historical annual percentage return
+
+
+Can I simplify the code?
