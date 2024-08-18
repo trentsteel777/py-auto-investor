@@ -14,7 +14,8 @@ class LogLevel(Enum):
 
 Portfolio = dotdict()
 # Michael Burry - https://twitter.com/burrytracker/status/1691435571783090176
-Portfolio["BURRY"] = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
+Portfolio["BURRY"] = ["GOOG"]
+#Portfolio["BURRY"] = ["AMZN", "BABA", "BKNG", "BRKR", "C", "CVS", "GOOG", "HCA", "JD", "MGM", "MTD", "NXST", "ORCL", "QRTEA", "SB", "SBLK", "VTLE", "WBD"]
 # Joel Greenblatt - https://www.magicformulainvesting.com/Screening/StockScreening
 Portfolio["GREENBLAT"] = ['AMCX', 'ASRT', 'BKE', 'BTMD', 'CCSI', 'COLL', 'CPRX', 'CROX', 'HPQ', 'HRMY', 'HSII', 'IMMR', 'JAKK', 'JILL', 'MCFT', 'MD', 'MED', 'MO', 'OCUP', 'PLTK', 'PRDO', 'RMNI', 'SCYX', 'SPRO', 'SURG', 'TZOO', 'UIS', 'UNTC', 'VYGR', 'ZYME']
 Portfolio["SPY"] = ['SPY']
@@ -357,18 +358,24 @@ class SRsi(SStock):
 class SStopLoss__(SStock):
     def __init__(self, watchlist, log_level=LogLevel.NONE):
         super().__init__(watchlist, log_level)
-        self.sell_price = 0
-        self.buy_price = None
-        self.stop_price = None
+        self.sell_price = {}
+        self.buy_price = {}
+        self.stop_price = {}
+        self.upper = 80
+        self.lower = 30
+        for w in self.watchlist:
+            self.sell_price[w] = 0
+            self.buy_price[w] = 0
+            self.stop_price[w] = 0
 
     @override
     def _isBuy(self, sd):
         if self.shares[sd.symbol] > 0:
             return False
 
-        if sd.close > self.sell_price:
-            self.buy_price = sd.close
-            self.stop_price = int(sd.close * 0.97)
+        if sd.close > self.buy_price[sd.symbol] or (sd.rsi < self.lower):
+            self.buy_price[sd.symbol] = sd.close
+            self.stop_price[sd.symbol] = int(sd.close * 0.97)
             return True
         else:
             return False
@@ -378,11 +385,11 @@ class SStopLoss__(SStock):
         if not self.shares[sd.symbol] > 0:
             return False
         
-        if percentage_difference(sd.close, self.stop_price) >= 20:
-            self.stop_price = (self.stop_price * 1.1)
+        if percentage_difference(sd.close, self.stop_price[sd.symbol]) >= 20:
+            self.stop_price[sd.symbol] = (self.stop_price[sd.symbol] * 1.1)
 
-        if sd.close < self.stop_price:
-            self.sell_price = sd.close
+        if sd.close < self.stop_price[sd.symbol]:
+            self.sell_price[sd.symbol] = sd.close
             return True
         else:
             return False

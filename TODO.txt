@@ -1,11 +1,11 @@
-Add more stocks
+DONE - Add more stocks
 
 DONE - have a way to compare individual stocks with SStopLoss__ VS SBuyAndHold
 DONE -     how many stocks beat SBuyAndHold with SStopLoss__
 
 DONE - figure out a way to have SStopLoss__ work with a multi-stock portfolio
-    re-run test with a portfolio of stocks I would actually use in PROD to find real results
-    TEST: multi-stock portfolio - SStopLoss__ VS SBuyAndHold
+    DONE - re-run test with a portfolio of stocks I would actually use in PROD to find real results
+    DONE - TEST: multi-stock portfolio - SStopLoss__ VS SBuyAndHold
 
 DONE - Add LogLevel to SBuyAndHold
 DONE - Add portfolio / watchlist to SBuyAndHold
@@ -13,3 +13,5 @@ DONE - Add portfolio / watchlist to SBuyAndHold
 
 https://www.youtube.com/watch?v=mSRUqxX963w
 https://www.youtube.com/watch?v=2CkpmA90F5M
+
+DONE - Add in rebuys on swings when RSI is oversold

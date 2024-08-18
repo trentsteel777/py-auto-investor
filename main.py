@@ -19,8 +19,8 @@ def main():
     df_spy = df_market_data.xs("SPY", level=1)
     
     multi_asset_strats = [
-        SBuyAndHold(Portfolio.BURRY),
-        SStopLoss__(Portfolio.BURRY)
+        SBuyAndHold(Portfolio.BURRY, LogLevel.NONE),
+        SStopLoss__(Portfolio.BURRY, LogLevel.DEBUG)
     ]
 
     single_asset_strats = {}#create_single_asset_strats()
