@@ -113,7 +113,14 @@ def print_results(df_spy, strats):
     end_date = df_spy.index.max().to_pydatetime().date()
     print("start_date:", start_date, "-> end_date:", end_date)
     for s in strats:
-        print(f"{s.__class__.__name__ :<15}:", f"${s.profit_loss():,.0f}")
+        prefix = ''
+        if 'SBuyAndHold' in s.__class__.__name__ :
+            prefix = 'BH_'
+        if 'SStopLoss' in s.__class__.__name__ :
+            prefix = 'SS_'   
+
+        #print(f"{s.__class__.__name__ :<15}:", f"${s.profit_loss():,.0f}")
+        print(f"{prefix}{s.watchlist[0] :<15}:", f"${s.profit_loss():,.0f}")
 
 def print_results_with_portfolio(df_spy, symbol_map):
     start_date = df_spy.index.min().to_pydatetime().date()

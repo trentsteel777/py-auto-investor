@@ -6,7 +6,7 @@ from overrides import override
 from abc import ABC, abstractmethod
 
 CONTRACT_SIZE=100
-STARTING_CASH=25000
+STARTING_CASH=100000
 
 class LogLevel(Enum):
     DEBUG = auto()
@@ -20,6 +20,8 @@ Portfolio["BURRY"] = ["GOOG"]
 Portfolio["GREENBLAT"] = ['AMCX', 'ASRT', 'BKE', 'BTMD', 'CCSI', 'COLL', 'CPRX', 'CROX', 'HPQ', 'HRMY', 'HSII', 'IMMR', 'JAKK', 'JILL', 'MCFT', 'MD', 'MED', 'MO', 'OCUP', 'PLTK', 'PRDO', 'RMNI', 'SCYX', 'SPRO', 'SURG', 'TZOO', 'UIS', 'UNTC', 'VYGR', 'ZYME']
 Portfolio["SPY"] = ['SPY']
 Portfolio["EURUSD"] = ['EURUSD']
+
+Portfolio['ALPACA'] =['COIN','CRWD','MNDY','PANW','PLTR','SBUX','SHOP','SNOW','TSLA']
 
 class SStock(ABC):
     def __init__(self, watchlist, log_level=LogLevel.NONE):
